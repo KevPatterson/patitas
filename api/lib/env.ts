@@ -26,8 +26,19 @@ function required(name: string): string {
   return value ?? "";
 }
 
+function validateAppSecret(secret: string): void {
+  if (process.env.NODE_ENV === "production") {
+    if (!secret || secret.length < 32) {
+      throw new Error("APP_SECRET must be at least 32 characters long in production");
+    }
+  }
+}
+
+const appSecret = required("APP_SECRET");
+validateAppSecret(appSecret);
+
 export const env = {
-  appSecret: required("APP_SECRET"),
+  appSecret,
   isProduction: process.env.NODE_ENV === "production",
   databaseUrl: required("DATABASE_URL"),
   googleClientId: required("GOOGLE_CLIENT_ID"),

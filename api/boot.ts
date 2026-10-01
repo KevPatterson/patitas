@@ -8,8 +8,14 @@ import { env } from "./lib/env";
 import { createGoogleCallbackHandler } from "./auth/google";
 import { handleRegister, handleLogin } from "./auth/handlers";
 import { Paths } from "@contracts/constants";
+import { securityHeaders, authRateLimit, apiRateLimit } from "./lib/security";
 
 const app = new Hono<{ Bindings: HttpBindings }>();
+
+// Middleware de seguridad para producción
+if (process.env.NODE_ENV === "production") {
+  app.use("*", securityHeaders());
+}
 
 // Middleware de logging para producción
 if (process.env.NODE_ENV === "production") {
@@ -41,12 +47,13 @@ app.get("/health", (c) => {
   });
 });
 
-// Rutas de autenticación HTTP
-app.post("/api/auth/register", handleRegister);
-app.post("/api/auth/login", handleLogin);
+// Rutas de autenticación HTTP con rate limiting
+app.post("/api/auth/register", authRateLimit, handleRegister);
+app.post("/api/auth/login", authRateLimit, handleLogin);
 app.get(Paths.oauthCallback, createGoogleCallbackHandler());
 
-app.use("/api/trpc/*", async (c) => {
+// API tRPC con rate limiting general
+app.use("/api/trpc/*", apiRateLimit, async (c) => {
   return fetchRequestHandler({
     endpoint: "/api/trpc",
     req: c.req.raw,
@@ -54,6 +61,7 @@ app.use("/api/trpc/*", async (c) => {
     createContext,
   });
 });
+
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
@@ -68,7 +76,7 @@ if (env.isProduction) {
   console.log("[PRODUCTION] Configuring static file serving...");
   serveStaticFiles(app);
   
-  const port = 3000; // Puerto fijo para Railway
+  const port = Number(process.env.PORT) || 3000;
   const hostname = "0.0.0.0";
   
   console.log(`[PRODUCTION] Starting HTTP server on ${hostname}:${port}`);
@@ -98,7 +106,7 @@ if (env.isProduction) {
     console.error('[UNCAUGHT EXCEPTION]', error);
   });
 
-  process.on('unhandledRejection', (reason, promise) => {
+  process.on('unhandledRejection', (reason) => {
     console.error('[UNHANDLED REJECTION]', reason);
   });
 }

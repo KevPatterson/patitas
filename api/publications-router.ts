@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
@@ -9,7 +10,6 @@ import {
   users,
   notifications,
 } from "@db/schema";
-import { storage } from "./lib/storage";
 import {
   publicationInput,
   searchInput,
@@ -20,6 +20,7 @@ import {
   type PublicPublication,
   type PublicationCard,
 } from "@contracts/patitas";
+import { getStorage } from "./lib/s3-storage";
 
 const MAX_NEW_PUBLICATIONS_PER_DAY = 10;
 
@@ -34,7 +35,7 @@ function slugify(text: string) {
 }
 
 function randomSuffix() {
-  return Math.random().toString(36).slice(2, 8);
+  return randomBytes(3).toString("hex");
 }
 
 /** Difumina coordenadas para proteger la privacidad (~1-2 km) */
@@ -49,16 +50,23 @@ async function presignImages(publicationIds: number[]) {
     .from(publicationImages)
     .where(inArray(publicationImages.publicationId, publicationIds))
     .orderBy(publicationImages.sortOrder);
-  const { urls } = await storage.getPresignedUrls({ keys: rows.map((r) => r.storageKey) });
-  const byKey = new Map(urls.map((u) => [u.key, u.url]));
-  const map = new Map<number, { key: string; url: string }[]>();
-  for (const r of rows) {
-    const url = byKey.get(r.storageKey);
-    if (!url) continue;
-    if (!map.has(r.publicationId)) map.set(r.publicationId, []);
-    map.get(r.publicationId)!.push({ key: r.storageKey, url });
+  
+  try {
+    const storage = getStorage();
+    const { urls } = await storage.getPresignedUrls(rows.map((r) => r.storageKey));
+    const byKey = new Map(urls.map((u) => [u.key, u.url]));
+    const map = new Map<number, { key: string; url: string }[]>();
+    for (const r of rows) {
+      const url = byKey.get(r.storageKey);
+      if (!url) continue;
+      if (!map.has(r.publicationId)) map.set(r.publicationId, []);
+      map.get(r.publicationId)!.push({ key: r.storageKey, url });
+    }
+    return map;
+  } catch (error) {
+    console.error("[presignImages] Error obteniendo URLs:", error);
+    return new Map<number, { key: string; url: string }[]>();
   }
-  return map;
 }
 
 function toCard(p: typeof publications.$inferSelect, imageUrl: string | null): PublicationCard {
@@ -181,7 +189,7 @@ export const publicationsRouter = createRouter({
       }
       const owner = await db.query.users.findFirst({ where: eq(users.id, p.ownerId) });
       const imgMap = await presignImages([p.id]);
-      const { microchip: _m, ownerId: _o, deletedAt: _d, ...rest } = p;
+      const { microchip, ownerId, deletedAt, ...rest } = p;
       const exposePrivate = isOwner || isAdmin;
       const pub: PublicPublication & { isOwner: boolean } = {
         ...rest,
@@ -218,17 +226,27 @@ export const publicationsRouter = createRouter({
       if (!ALLOWED_IMAGE_TYPES.includes(input.contentType)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Formato de imagen no permitido (usa JPG, PNG o WebP)" });
       }
-      const bytes = Uint8Array.from(Buffer.from(input.contentBase64, "base64"));
+      const bytes = Buffer.from(input.contentBase64, "base64");
       if (bytes.length > MAX_IMAGE_BYTES) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "La imagen supera el tamaño máximo (8 MB)" });
       }
       const ext = input.contentType === "image/png" ? "png" : input.contentType === "image/webp" ? "webp" : "jpg";
-      const saved = await storage.uploadFile({
-        fileContent: bytes,
-        fileName: `patitas/${Date.now()}.${ext}`,
-        contentType: input.contentType,
-      });
-      return { key: saved.key };
+      
+      try {
+        const storage = getStorage();
+        const saved = await storage.uploadFile({
+          fileContent: bytes,
+          fileName: `patitas/${Date.now()}.${ext}`,
+          contentType: input.contentType,
+        });
+        return { key: saved.key };
+      } catch (error) {
+        console.error("[uploadImage] Error:", error);
+        throw new TRPCError({ 
+          code: "INTERNAL_SERVER_ERROR", 
+          message: "Error al subir la imagen. Verifica la configuración del almacenamiento." 
+        });
+      }
     }),
 
   create: authedQuery.input(publicationInput).mutation(async ({ ctx, input }) => {
@@ -334,7 +352,9 @@ export const publicationsRouter = createRouter({
       if (p.ownerId !== ctx.user.id && ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN" });
       }
-      const { imageKeys: _i, ...data } = input.data;
+      const { imageKeys, ...data } = input.data;
+      // imageKeys no se procesan en update (solo en create)
+      void imageKeys;
       await db.update(publications).set(data).where(eq(publications.id, p.id));
       return { ok: true };
     }),

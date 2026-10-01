@@ -58,8 +58,9 @@ export async function handleRegister(c: Context) {
     if (error instanceof z.ZodError) {
       return c.json({ error: "Invalid input", details: error.issues }, 400);
     }
-    if (error && typeof error === "object" && "status" in error) {
-      return c.json({ error: (error as any).message }, (error as any).status);
+    if (error && typeof error === "object" && "status" in error && "message" in error) {
+      const e = error as { status: number; message: string };
+      return c.json({ error: e.message }, e.status as 400 | 401 | 403 | 404 | 500);
     }
     console.error("[Register] Error:", error);
     return c.json({ error: "Registration failed" }, 500);
@@ -97,8 +98,9 @@ export async function handleLogin(c: Context) {
     if (error instanceof z.ZodError) {
       return c.json({ error: "Invalid input", details: error.issues }, 400);
     }
-    if (error && typeof error === "object" && "status" in error) {
-      return c.json({ error: (error as any).message }, (error as any).status);
+    if (error && typeof error === "object" && "status" in error && "message" in error) {
+      const e = error as { status: number; message: string };
+      return c.json({ error: e.message }, e.status as 400 | 401 | 403 | 404 | 500);
     }
     console.error("[Login] Error:", error);
     return c.json({ error: "Login failed" }, 500);

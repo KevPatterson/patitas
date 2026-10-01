@@ -4,8 +4,9 @@ import { env } from "../lib/env";
 import { getSessionCookieOptions } from "../lib/cookies";
 import { Session } from "@contracts/constants";
 import { signSessionToken } from "./session";
-import { findUserByGoogleId, upsertGoogleUser } from "../queries/users";
+import { upsertGoogleUser } from "../queries/users";
 import type { GoogleProfile } from "./types";
+import { validateOAuthState } from "../lib/oauth-state";
 
 async function exchangeGoogleCode(
   code: string,
@@ -69,7 +70,14 @@ export function createGoogleCallbackHandler() {
     }
 
     try {
-      const redirectUri = atob(state);
+      // Validar el state OAuth (criptográficamente seguro)
+      const redirectUri = validateOAuthState(state);
+      
+      if (!redirectUri) {
+        console.error("[Google OAuth] Invalid or expired state");
+        return c.redirect("/login?error=invalid_state", 302);
+      }
+
       const tokenResp = await exchangeGoogleCode(code, redirectUri);
       const profile = await getGoogleProfile(tokenResp.access_token);
 

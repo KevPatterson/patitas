@@ -44,18 +44,38 @@ export const reportsRouter = createRouter({
     .mutation(async ({ ctx, input }) => {
       const db = getDb();
       const p = await pubBySlug(input.slug);
+      
+      // Rate limiting: máximo de reportes por usuario
       if (ctx.user) {
+        // Verificar que no haya reportado ya esta publicación
         const existing = await db.query.reports.findFirst({
           where: and(
             eq(reports.publicationId, p.id),
             eq(reports.reporterId, ctx.user.id),
-            eq(reports.status, "pending"),
           ),
         });
         if (existing) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Ya reportaste esta publicación" });
         }
+        
+        // Verificar límite de reportes por día (anti-abuso)
+        const [{ n }] = await db
+          .select({ n: sql<number>`count(*)` })
+          .from(reports)
+          .where(
+            and(
+              eq(reports.reporterId, ctx.user.id),
+              sql`createdAt >= NOW() - INTERVAL 24 HOUR`
+            )
+          );
+        if (Number(n) >= 10) {
+          throw new TRPCError({ 
+            code: "TOO_MANY_REQUESTS", 
+            message: "Has alcanzado el límite de reportes por día" 
+          });
+        }
       }
+      
       await db.insert(reports).values({
         publicationId: p.id,
         reporterId: ctx.user?.id ?? null,
