@@ -188,7 +188,6 @@ SÍ. Las cookies `secure` solo se activan en producción (`NODE_ENV=production`)
 
 Todas las de `.env.example`:
 ```env
-APP_ID
 APP_SECRET
 DATABASE_URL
 GOOGLE_CLIENT_ID

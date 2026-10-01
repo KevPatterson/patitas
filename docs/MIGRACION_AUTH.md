@@ -95,7 +95,6 @@ OWNER_EMAIL=admin@ejemplo.com
 Copia `.env.example` a `.env` y completa:
 
 ```env
-APP_ID=patitas-app
 APP_SECRET=tu-secreto-super-seguro-genera-uno-aleatorio
 
 DATABASE_URL=mysql://usuario:password@localhost:3306/patitas

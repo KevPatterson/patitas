@@ -39,7 +39,6 @@ APP_SECRET=c08d5b7e7ceb0c03fdd569044203c907c70cea8394b089f5c0d2aa5a181e5356
 DATABASE_URL=mysql://...
 
 # Agregar nuevas
-APP_ID=patitas-app
 GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=tu-client-secret
 VITE_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com

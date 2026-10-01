@@ -55,7 +55,7 @@ users:
 ```env
 # Eliminadas:
 ❌ VITE_KIMI_AUTH_URL
-❌ VITE_APP_ID
+❌ VITE_APP_ID (ya no se usa)
 ❌ KIMI_AUTH_URL
 ❌ KIMI_OPEN_URL
 ❌ OWNER_UNION_ID
@@ -91,7 +91,6 @@ users:
 ### 2. Actualizar Variables de Entorno
 Edita tu archivo `.env` y agrega:
 ```env
-APP_ID=patitas-app
 GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=tu-client-secret
 VITE_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com

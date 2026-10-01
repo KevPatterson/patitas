@@ -50,7 +50,6 @@ Edita el archivo `.env`:
 
 ```env
 # Backend
-APP_ID=patitas-app
 APP_SECRET=tu-secreto-super-seguro
 DATABASE_URL=mysql://usuario:password@localhost:3306/patitas
 
@@ -271,7 +270,6 @@ railway up
 Asegúrate de configurar todas las variables en tu plataforma de hosting:
 
 ```env
-APP_ID
 APP_SECRET
 DATABASE_URL
 GOOGLE_CLIENT_ID

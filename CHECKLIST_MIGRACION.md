@@ -46,7 +46,6 @@ Usa este checklist para asegurarte de completar todos los pasos de la migración
 
 Edita tu archivo `.env`:
 
-- [ ] `APP_ID=patitas-app`
 - [ ] `APP_SECRET=` (mantener el existente o generar uno nuevo)
 - [ ] `DATABASE_URL=` (verificar que esté correcto)
 - [ ] `GOOGLE_CLIENT_ID=`
