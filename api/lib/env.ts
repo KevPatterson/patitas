@@ -1,4 +1,5 @@
-import "dotenv/config";
+// Cargar variables de entorno (solo en desarrollo)
+import "../load-env";
 
 function required(name: string): string {
   const value = process.env[name];
