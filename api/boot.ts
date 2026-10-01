@@ -77,10 +77,20 @@ if (env.isProduction) {
     fetch: app.fetch, 
     port, 
     hostname 
-  }, (info) => {
+  }, async (info) => {
     console.log(`[PRODUCTION] Server is listening on ${hostname}:${info.port}`);
     console.log(`[PRODUCTION] Ready to accept HTTP connections`);
     console.log(`[PRODUCTION] Health check available at: http://${hostname}:${info.port}/health`);
+    
+    // Test health check endpoint
+    try {
+      const testReq = new Request(`http://localhost:${info.port}/health`);
+      const testRes = await app.fetch(testReq);
+      const healthData = await testRes.json();
+      console.log(`[PRODUCTION] Health check test:`, healthData);
+    } catch (error) {
+      console.error(`[PRODUCTION] Health check test failed:`, error);
+    }
   });
 
   // Manejo de errores de Node
