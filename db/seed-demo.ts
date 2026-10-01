@@ -59,12 +59,12 @@ const CASES = [
 async function main() {
   const db = getDb();
 
-  let owner = await db.query.users.findFirst({ where: eq(users.unionId, "patitas-demo") });
+  let owner = await db.query.users.findFirst({ where: eq(users.email, "demo@patitas.app") });
   if (!owner) {
     const [{ id }] = await db.insert(users).values({
-      unionId: "patitas-demo",
+      email: "demo@patitas.app",
       name: "Comunidad Patitas",
-      email: null,
+      password: null,
     }).$returningId();
     owner = await db.query.users.findFirst({ where: eq(users.id, id) });
   }

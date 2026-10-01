@@ -13,7 +13,7 @@ export const env = {
   appSecret: required("APP_SECRET"),
   isProduction: process.env.NODE_ENV === "production",
   databaseUrl: required("DATABASE_URL"),
-  kimiAuthUrl: required("KIMI_AUTH_URL"),
-  kimiOpenUrl: required("KIMI_OPEN_URL"),
-  ownerUnionId: process.env.OWNER_UNION_ID ?? "",
+  googleClientId: required("GOOGLE_CLIENT_ID"),
+  googleClientSecret: required("GOOGLE_CLIENT_SECRET"),
+  ownerEmail: process.env.OWNER_EMAIL ?? "",
 };

@@ -13,10 +13,12 @@ import {
 
 export const users = mysqlTable("users", {
   id: serial("id").primaryKey(),
-  unionId: varchar("unionId", { length: 255 }).notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  password: varchar("password", { length: 255 }),
   name: varchar("name", { length: 255 }),
-  email: varchar("email", { length: 320 }),
   avatar: text("avatar"),
+  googleId: varchar("googleId", { length: 255 }).unique(),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt")
