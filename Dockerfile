@@ -1,14 +1,11 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copiar archivos de dependencias
-COPY package.json package-lock.json ./
-
-# Instalar todas las dependencias (incluyendo dev) - v2
-RUN npm ci && npm list vite esbuild
-
-# Copiar el resto del código
+# Copiar todo el código
 COPY . .
+
+# Instalar todas las dependencias
+RUN npm ci
 
 # Construir la aplicación
 RUN npm run build
@@ -17,8 +14,10 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copiar solo las dependencias de producción
+# Copiar package files
 COPY package.json package-lock.json ./
+
+# Instalar solo dependencias de producción
 RUN npm ci --omit=dev
 
 # Copiar los archivos construidos
