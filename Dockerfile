@@ -1,19 +1,28 @@
-FROM node:20-alpine AS deps
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci --include=dev
 
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copiar archivos de dependencias
+COPY package.json package-lock.json ./
+
+# Instalar todas las dependencias (incluyendo dev)
+RUN npm ci
+
+# Copiar el resto del código
 COPY . .
+
+# Construir la aplicación
 RUN npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY package.json ./
+
+# Copiar solo las dependencias de producción
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Copiar los archivos construidos
+COPY --from=builder /app/dist ./dist
+
 EXPOSE 3000
 CMD ["npm", "start"]
