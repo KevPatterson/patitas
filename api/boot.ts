@@ -36,7 +36,11 @@ if (env.isProduction) {
   serveStaticFiles(app);
 
   const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  const hostname = "0.0.0.0"; // Importante: escuchar en todas las interfaces para Railway
+  
+  console.log(`Starting server on ${hostname}:${port}...`);
+  
+  serve({ fetch: app.fetch, port, hostname }, () => {
+    console.log(`✓ Server running on http://${hostname}:${port}/`);
   });
 }
