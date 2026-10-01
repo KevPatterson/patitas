@@ -68,7 +68,7 @@ if (env.isProduction) {
   console.log("[PRODUCTION] Configuring static file serving...");
   serveStaticFiles(app);
   
-  const port = parseInt(process.env.PORT || "3000");
+  const port = 3000; // Puerto fijo para Railway
   const hostname = "0.0.0.0";
   
   console.log(`[PRODUCTION] Starting HTTP server on ${hostname}:${port}`);
