@@ -31,16 +31,26 @@ app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 export default app;
 
 if (env.isProduction) {
+  console.log("🚀 Starting production server...");
+  
   const { serve } = await import("@hono/node-server");
   const { serveStaticFiles } = await import("./lib/vite");
+  
+  console.log("📁 Setting up static files...");
   serveStaticFiles(app);
-
+  
   const port = parseInt(process.env.PORT || "3000");
   const hostname = "0.0.0.0"; // Importante: escuchar en todas las interfaces para Railway
   
-  console.log(`Starting server on ${hostname}:${port}...`);
+  console.log(`🌐 Starting server on ${hostname}:${port}...`);
   
-  serve({ fetch: app.fetch, port, hostname }, () => {
-    console.log(`✓ Server running on http://${hostname}:${port}/`);
-  });
+  try {
+    serve({ fetch: app.fetch, port, hostname }, () => {
+      console.log(`✅ Server running on http://${hostname}:${port}/`);
+      console.log(`✅ Ready to accept connections`);
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
 }
