@@ -4,8 +4,8 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY package.json package-lock.json ./
 
-# Instalar todas las dependencias (incluyendo dev)
-RUN npm ci
+# Instalar todas las dependencias (incluyendo dev) - v2
+RUN npm ci && npm list vite esbuild
 
 # Copiar el resto del código
 COPY . .
